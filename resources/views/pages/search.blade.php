@@ -4,6 +4,31 @@
 
 @section('content')
 
+<script>
+    function encodeForAjax(data) {
+        if (data == null) return null;
+        return Object.keys(data).map(function(k){
+            return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+        }).join('&');
+    }
+
+    function sendAjaxRequest(method, url, data, handler) {
+        let request = new XMLHttpRequest();
+
+        request.open(method, url, true);
+        request.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
+        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        request.addEventListener('load', handler);
+        request.send(encodeForAjax(data));
+    }
+
+    function deleteUser(id) {
+        sendAjaxRequest("POST", "adminManageUsers/delete", {id : id}); // request sent to adminManageUsers/delete with out id {parameter : myVariable}
+
+        document.querySelector("#userForm" + id).remove();
+    }
+</script>
+
 <ol class="breadcrumb" style="margin-left: 10px">
   <li class="breadcrumb-item"><a href="/">Home</a></li>
   <li class="breadcrumb-item active"><a href="/adminManageUsers">SearchUsers</a></li>
@@ -15,10 +40,9 @@
     <h3>Sorry, we could not find any user with name <i>{{ $searchStr }}</i></h3>
 @else
 
-<h1 style="margin-left: 10px">We have found the following products:</h1>
-<p>({{$searchUsers->total()}} product(s) found) </p>
-
-<div style="margin-left: 10px; margin: 20px;">
+<div style="margin: 0px 100px">
+    <h1>We have found the following users:</h1>
+    <p>({{$searchUsers->total()}} user(s) found) </p>
     <div class="data_div">
         @foreach($searchUsers as $user)
             <div class="card userCard" style="margin-top: 30px; display: flex;" id="userForm{{ $user->id }}">
@@ -40,7 +64,9 @@
             </div>
         @endforeach
     </div>
-    {{ $searchUsers->appends(request()->input())->links() }}
+    <div class="text-center">
+        {!! $searchUsers->links(); !!}
+    </span>
 </div>
 @endif
 
